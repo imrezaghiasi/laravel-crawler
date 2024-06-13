@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Goutte\Client;
-use Illuminate\Http\Request;
+
+use GuzzleHttp\Client;
+use Symfony\Component\DomCrawler\Crawler;
 
 class ScraperController extends Controller
 {
@@ -11,18 +12,19 @@ class ScraperController extends Controller
 
     public function scraper()
     {
-        $client = new Client();
         $url = 'https://www.worldometers.info/coronavirus/';
+        $client = new Client();
+        $response = $client->get($url);
 
-        $page = $client->request('GET',$url);
+        $html = (string)$response->getBody();
+        $crawler = new Crawler($html);
 
-//      echo $page->filter('.maincounter-number')->text();
-
-        $page->filter('#maincounter-wrap')->each(function ($item){
+        $crawler->filter('#maincounter-wrap')->each(function ($item) {
             $this->results[$item->filter('h1')->text()] = $item->filter('.maincounter-number')->text();
         });
 
         $data = $this->results;
-        return view('scraper',compact('data'));
+        return view('scraper', compact('data'));
     }
+
 }
